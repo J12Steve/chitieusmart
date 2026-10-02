@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   1. DESIGN TOKENS cho Glassmorphism
+   Chỉnh một chỗ, cả app đổi theo.
+   ───────────────────────────────────────────── */
+:root {
+  /* Kính: nền trắng bán trong suốt */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-strong: rgba(255, 255, 255, 0.68); /* modal, card nổi bật */
+  --glass-bg-hover: rgba(255, 255, 255, 0.60);
+
+  /* Viền mỏng trong suốt, tạo cảm giác cạnh kính */
+  --glass-border: rgba(255, 255, 255, 0.65);
+
+  /* Đổ bóng mờ ngả tím nhạt (không dùng đen) cho dịu mắt */
+  --glass-shadow: 0 8px 32px rgba(120, 110, 170, 0.14);
+  --glass-shadow-hover: 0 12px 40px rgba(120, 110, 170, 0.22);
+
+  /* Highlight mép trên, như ánh sáng chiếu vào kính */
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  --glass-blur: 20px;
+  --glass-saturate: 160%; /* tăng nhẹ độ rực của nền phía sau khi bị blur */
+
+  --noise-opacity: 0.05;
+}
+
+/* ─────────────────────────────────────────────
+   2. NỀN: Mesh gradient pastel
+   Dùng pseudo-element `fixed` thay cho
+   `background-attachment: fixed` vì cách này
+   không bị giật / lỗi trên iOS Safari.
+   ───────────────────────────────────────────── */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply font-sans text-ink antialiased;
+  background-color: #f4f1fa;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(at 12% 10%, #dcd6f7 0, transparent 50%),
+    radial-gradient(at 88% 8%, #cfe8f7 0, transparent 50%),
+    radial-gradient(at 80% 90%, #fbe0d6 0, transparent 50%),
+    radial-gradient(at 8% 85%, #d3f0e3 0, transparent 50%);
+}
+
+/* ─────────────────────────────────────────────
+   3. NOISE TEXTURE
+   SVG feTurbulence nhúng thẳng (không cần file ảnh).
+   Phủ lên toàn trang, mix-blend multiply, opacity rất thấp
+   → tạo chiều sâu như giấy mịn mà không ảnh hưởng chữ.
+   `pointer-events: none` để không chặn click.
+   ───────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─────────────────────────────────────────────
+   4. UTILITY CLASSES cho kính
+   Các component ở Bước 2 chỉ cần gắn .glass / .glass-strong.
+   Hiệu ứng chuyển động (nhấc lên, spring) do Framer Motion
+   xử lý; CSS chỉ chuyển màu/viền/bóng.
+   ───────────────────────────────────────────── */
+@layer components {
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), var(--glass-highlight);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+  .glass-strong {
+    @apply glass;
+    background: var(--glass-bg-strong);
+  }
+
+  /* Dùng cho phần tử tương tác (card click được, nút) */
+  .glass-interactive:hover {
+    background: var(--glass-bg-hover);
+    box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
+  }
+
+  /* Vòng focus rõ ràng cho bàn phím, màu brand nhạt */
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent;
+  }
+}
+
+/* Trình duyệt không hỗ trợ backdrop-filter → tăng độ đục để vẫn đọc được */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.82);
+    --glass-bg-strong: rgba(255, 255, 255, 0.92);
+  }
+}
+
+/* Thanh cuộn mảnh, hợp phong cách */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 156, 240, 0.4) transparent;
+}
